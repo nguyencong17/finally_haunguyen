@@ -1,33 +1,35 @@
 import postApi from "./api/postApi";
+import {setTextContent, truncateText} from './utils';
+import dayjs from "dayjs";
+import relativeTime from 'dayjs/plugin/relativeTime';
 
+//to use dayjs
+dayjs.extend(relativeTime)
 function createPostElement(post) {
   if(!post) return;
 
-  try {
-    // find tempalte
-    const postTemplate = document.getElementById('postItemTemplate');
-    if(!postTemplate) return;
+  // find tempalte
+  const postTemplate = document.getElementById('postItemTemplate');
+  if(!postTemplate) return;
 
-    const liElement = postTemplate.content.firstElementChild.cloneNode(true);
-    if(!liElement) return;
-    // update title, content, thumbnail
-    const titleElement = liElement.querySelector('[data-id="title"]');
-    if(titleElement) titleElement.textContent = post.title;
+  const liElement = postTemplate.content.firstElementChild.cloneNode(true);
+  if(!liElement) return;
+  // update title, content, thumbnail
+  setTextContent(liElement, '[data-id="title"]', post.title);
+  setTextContent(liElement, '[data-id="description"', truncateText(post.description, 100));
+  setTextContent(liElement, '[data-id="author"]', post.author);
+  setTextContent(liElement, '[data-id="timeSpan"]', dayjs(post.updateAt).fromNow());
 
-    const descriptionElement = liElement.querySelector('[data-id="description"]');
-    if(descriptionElement) descriptionElement.textContent = post.description;
+  const thumbnailElement = liElement.querySelector('[data-id="thumbnail"]');
+  if(thumbnailElement) {
+    thumbnailElement.src = post.imageUrl
 
-    const authorElement = liElement.querySelector('[data-id="author"]');
-    if(authorElement) authorElement.textContent = post.author;
-
-
-    const thumbnailElement = liElement.querySelector('[data-id="thumbnail"]');
-    if(thumbnailElement) thumbnailElement.src = post.imageUrl;
-
-    return liElement;
-  } catch (error) {
-    console.log("failed to create post item",error)
+    thumbnailElement.addEventListener('error', () => {
+      thumbnailElement.src = 'https://placehold.jp/450x450.png';
+    })
   }
+  
+  return liElement;
 }
 
 function renderPostList(postList) {
