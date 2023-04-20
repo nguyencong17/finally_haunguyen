@@ -1,7 +1,7 @@
-import postApi from "./api/postApi";
+import postApi from './api/postApi';
 import {setTextContent, truncateText} from './utils';
-import dayjs from "dayjs";
-import relativeTime from 'dayjs/plugin/relativeTime';
+import dayjs from 'dayjs';
+import relativeTime from '/dayjs/plugin/relativeTime';
 
 //to use dayjs
 dayjs.extend(relativeTime)
@@ -46,8 +46,34 @@ function renderPostList(postList) {
   })
 };
 
+function handlePrevClick() {
+  console.log('Prev Click');
+}
+
+function handleNextClick() {
+  console.log('Next Click');
+}
+
+function initPagination() {
+  // bind event to button Next/Prev 
+  const ulPagination = getElementById('pagination');
+  if(!ulPagination) return;
+  
+  const prevLink = ulPagination.firstElementChild?.firstElementChild;
+  if(prevLink) {
+    prevLink.addEventListener('click', handlePrevClick)
+  }
+
+  if(nextLink) {
+    nextLink.addEventListener('click', handleNextClick)
+  }
+}
+
 (async () => {
   try {
+
+    initPagination();
+
     const queryParams = {
       _page: 1,
       _limit: 6
