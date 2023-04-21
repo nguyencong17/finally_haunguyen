@@ -1,5 +1,6 @@
+import debounce from 'lodash.debounce';
 import postApi from './api/postApi';
-import {setTextContent, truncateText} from './utils';
+import {getUlPagination, setTextContent, truncateText} from './utils';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 
@@ -33,10 +34,13 @@ function createPostElement(post) {
 }
 
 function renderPostList(postList) {
-  if(!Array.isArray(postList) || postList.length === 0) return;
+  if(!Array.isArray(postList)) return;
   
   const ulElement = document.getElementById('postsList');
   if(!ulElement) return;
+
+  ulElement.textContent = '';
+
   postList.forEach((post) => {
     const liElement = createPostElement(post);
 
@@ -44,25 +48,71 @@ function renderPostList(postList) {
   })
 };
 
-function handleFilterChange(filterName, filterValue) {
-  const url = new URL(window.location);
-  url.searchParams.set(filterName, filterValue);
-  history.pushState({}, '', url);
+function renderPagination(pagination) {
+  const ulPagination = getUlPagination();
+
+  if(!pagination || !ulPagination) return;
+
+  // calculate totalpage 
+  const {_page, _limit , _totalRows } = pagination;
+  const totalPages = Math.ceil(_totalRows / _limit);
+  console.log(totalPages);
+  
+  // Set information to tag ul 
+  ulPagination.dataset.page = _page;
+  ulPagination.dataset.totalPages = totalPages;
+
+  // Check Disable / Enable of Button Prev / Next
+  if(_page <= 1)  ulPagination.firstElementChild?.classList.add('disabled')
+  else ulPagination.firstElementChild?.classList.remove('disabled')
+
+  if(_page >= totalPages)  ulPagination.lastElementChild?.classList.add('disabled')
+  else ulPagination.lastElementChild?.classList.remove('disabled')
+}
+
+async function handleFilterChange(filterName, filterValue) {
+  try {
+    const url = new URL(window.location);
+    url.searchParams.set(filterName, filterValue);
+
+    if(filterName === "title_like") url.searchParams.set('_page', 1);
+    history.pushState({}, '', url);
+  
+    const { data, pagination } = await postApi.getAll(url.searchParams);
+    renderPostList(data);
+    renderPagination(pagination);
+  } catch (error) {
+    console.log("Error render pagination", error);
+  }
+
 }
 
 function handlePrevClick(e) {
   e.preventDefault();
-  console.log('Prev Click');
+  const ulPagination = getUlPagination();
+  if(!ulPagination) return;
+
+  const page = Number.parseInt(ulPagination.dataset.page) || 1;
+  if(page <= 1) return;
+
+  handleFilterChange('_page', page - 1);
 }
 
 function handleNextClick(e) {
   e.preventDefault();
-  console.log('Next Click');
+  const ulPagination = getUlPagination();
+  if(!ulPagination) return;
+
+  const page = Number.parseInt(ulPagination.dataset.page) || 1;
+  const totalPages = ulPagination.dataset.totalPages;
+  if(page >= totalPages) return;
+
+  handleFilterChange('_page', page + 1);
 }
 
 function initPagination() {
   // bind event to button Next/Prev
-  const ulPagination = document.getElementById('pagination');
+  const ulPagination = getUlPagination();
   if(!ulPagination) return;
   
   const prevLink = ulPagination.firstElementChild?.firstElementChild;
@@ -83,13 +133,28 @@ function initURL() {
   history.pushState({}, '' , url);
 }
 
+function initSearch() {
+  const searchInput = document.getElementById('searchInput');
+  if(!searchInput) return;
+
+  //set default searchinput from queryparams
+  const queryParams = new URLSearchParams(window.location.search);
+  if(queryParams.get('title_like')) {
+    searchInput.value = queryParams.get('title_like');
+  }
+  const debounceSearch = debounce((event) => handleFilterChange('title_like', event.target.value), 500)
+  searchInput.addEventListener('input', debounceSearch)
+}
+
 (async () => {
   try {
+    initSearch();
     initURL();
     const queryParams = new URLSearchParams(window.location.search);
     console.log(queryParams);
     const { data, pagination } = await postApi.getAll(queryParams);
     renderPostList(data);
+    renderPagination(pagination);
   } catch (error) {
     console.log('get all error', error); 
   }
