@@ -11,7 +11,6 @@ export function initPagination({elementId, defaultParams, onChange}) {
   if(prevLink) {
     prevLink.addEventListener('click', (e) => {
       e.preventDefault();
-      console.log("Helo");
       const page = Number.parseInt(ulPagination.dataset.page) || 1;
       if(page >= 2) onChange?.(page - 1);
     })
@@ -21,7 +20,6 @@ export function initPagination({elementId, defaultParams, onChange}) {
   if(nextLink) {
     nextLink.addEventListener('click', (e) => {
       e.preventDefault();
-      console.log("Helo");
       const page = Number.parseInt(ulPagination.dataset.page) || 1;
       const totalPages = ulPagination.dataset.totalPages;
       if(page < totalPages) onChange?.(page + 1);
