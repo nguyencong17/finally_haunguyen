@@ -30,11 +30,12 @@ export function createPostElement(post) {
     })
   }
 
-  // attack evedt
-  liElement.addEventListener('click', () => {
+  // attack event
+  const divElement = liElement.firstElementChild;
+  
+  divElement.addEventListener('click', () => {
     // redirect to post detail page
     window.location.assign(`/post-detail.html?id=${post.id}`);
-    renderDetailPost(post.id);
   })
   
   return liElement;
